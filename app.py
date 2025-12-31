@@ -7,8 +7,8 @@ st.set_page_config(layout="wide", page_title="Semantic Data Refinement")
 
 if "processed_data" not in st.session_state:
     st.session_state["processed_data"] = None
-if "last_target_row" not in st.session_state:
-    st.session_state["last_target_row"] = ""
+if "last_target_column" not in st.session_state:
+    st.session_state["last_target_column"] = ""
 
 
 # --- UI: File Upload ---
@@ -40,36 +40,52 @@ if uploaded_file is not None:
 
         with col_pick:
             st.subheader("⚙️ Settings")
-            target_row = st.selectbox("Select Column to Process:", options=df.columns)
+            target_column = st.selectbox("Select Column to Process:", options=df.columns)
 
             threshold = st.slider("Similarity Threshold", 0.5, 1.0, 0.75, 
                                  help="Lower values group more items together.")
-
             st.divider()
 
             if st.button("🚀 Run Analysis", width="stretch"):
-                with st.spinner("AI is analyzing the data, please wait..."):
-                    # Logic and AI
-                    st.success("Analysis completed!")
+                with st.status("AI Engine is working...", expanded=True) as status:
+
+                    st.write("⏳ Initializing AI Model (This may take a while on first run)...")
+
+                    st.write("🔍 Identifying unique variations in column...")
+                    unique_items = df[target_column].astype(str).unique().tolist()
+
+                    st.write(f"🧠 AI is clustering {len(unique_items)} items...")
+                    # mapping = get_standard_mapping(unique_items, threshold)
+
+                    # Debug: Show mapping dictionary
+                    # with st.expander("🔍 See AI Mapping Dictionary"):
+                    #    st.write(mapping)
+
+                    st.write("✍️ Applying transformation to the dataset...")
+                    # st.session_state["processed_data"] = df[target_column].map(mapping).fillna(df[target_column])
+                    st.session_state["last_target_column"] = target_column
+
+                    status.update(label="✅ Analysis Complete!", state="complete", expanded=False)
+                    st.success("Data successfully refined with AI.")
 
         with col_original:
             st.subheader("📄 Original Data")
-            if target_row in df.columns:
-                # df[[target_row]]
-                display_df = df[target_row].astype(str) 
+            if target_column in df.columns:
+                # df[[target_column]]
+                display_df = df[target_column].astype(str) 
                 st.dataframe(display_df, width="stretch", height=600)
 
         with col_processed:
-            st.subheader("🤖 Processed Data")
-            if st.session_state["processed_data"] is not None and st.session_state["last_target_row"] == target_row:
+            st.subheader("🤖 AI Refined Data")
+            if st.session_state["processed_data"] is not None and st.session_state["last_target_column"] == target_column:
                 processed_df = pd.DataFrame(
                     st.session_state["processed_data"].values,
-                    columns=[f"Processed: {target_row}"]
+                    columns=[f"Processed: {target_column}"]
                 )
 
                 st.dataframe(processed_df, width="stretch", height=600)
 
-                old_num = len(df[target_row].unique())
+                old_num = len(df[target_column].unique())
                 new_num = len(st.session_state["processed_data"].unique())
                 st.info(f"Uniqueness: {old_num} unique values → {new_num} unique values")
 
@@ -77,7 +93,7 @@ if uploaded_file is not None:
                 st.download_button(label="📥 Download (CSV)", data=csv, file_name="output.csv", mime="text/csv")
             
             else:
-                st.warning("Click '🚀 Run Analysis' to see the results.")
+                st.warning("Click '🚀 Run AI Analysis' to see the results.")
     else:
         st.error("Failed to process the uploaded file.")
 else:
