@@ -47,7 +47,7 @@ if uploaded_file:
         st.subheader("Master Dataset")
         st.write("This table contains the up-to-date master file with all your 'Apply & Save' operations.")
         # Always display the table with the most current master_df
-        st.dataframe(st.session_state["master_df"], use_container_width=True, height=500)
+        st.dataframe(st.session_state["master_df"], width="stretch", height=500)
         
         st.divider()
         st.subheader("💾 Export Full Dataset")
@@ -58,7 +58,7 @@ if uploaded_file:
                 data=full_excel,
                 file_name="refined_master_data.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
+                width="stretch"
             )
 
     with tab_analysis:
@@ -69,7 +69,7 @@ if uploaded_file:
             target_col = st.selectbox("Select Column to Analyze:", options=st.session_state["master_df"].columns)
             threshold = st.slider("Similarity Threshold", 0.5, 1.0, 0.75)
             
-            if st.button("🚀 Run AI Analysis", use_container_width=True):
+            if st.button("🚀 Run AI Analysis", width="stretch"):
                 with st.spinner("AI is analyzing variations..."):
                     refined = clean_and_standardize(st.session_state["master_df"][target_col], threshold)
                     orig = st.session_state["master_df"][target_col].astype(str)
@@ -93,7 +93,7 @@ if uploaded_file:
                         "Original": st.column_config.Column(disabled=True),
                         "AI_Refined": st.column_config.TextColumn("Refined Value (Editable)")
                     },
-                    use_container_width=True,
+                    width="stretch",
                     height=400,
                     key="editor_v3"
                 )
@@ -101,7 +101,7 @@ if uploaded_file:
                 # Update status based on edits
                 edited_df["Status"] = np.where(edited_df["Original"] != edited_df["AI_Refined"], "🔄 Modified", "✅ Same")
 
-                if st.button("💾 Apply & Save to Master Dataset", type="primary", use_container_width=True):
+                if st.button("💾 Apply & Save to Master Dataset", type="primary", width="stretch"):
                     final_col_name = f"Refined_{target_col}"
                     # Transfer the latest data from the editor (edited_df) to the master dataframe
                     st.session_state["master_df"][final_col_name] = edited_df["AI_Refined"].values
@@ -111,6 +111,6 @@ if uploaded_file:
                     st.balloons() # Visual confirmation
 
                 with st.expander("🔍 View Highlighted Preview (Read-only)"):
-                    st.dataframe(edited_df.style.apply(highlight_rows, axis=1), use_container_width=True)
+                    st.dataframe(edited_df.style.apply(highlight_rows, axis=1), width="stretch")
             else:
                 st.warning("Please select a column and click 'Run Analysis'.")
